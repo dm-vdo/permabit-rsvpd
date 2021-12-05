@@ -1,0 +1,8 @@
+MANIFEST
+Makefile.PL
+lib/RSVPD/Class.pm
+lib/RSVPD/RSVPServer.pm
+lib/RSVPD/Host.pm
+lib/RSVPD/Response.pm
+bin/rsvpd.pl
+bin/rsvpclient.pl

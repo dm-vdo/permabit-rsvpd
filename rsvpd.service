@@ -1,0 +1,15 @@
+[Unit]
+Description=Permabit RSVP Server Daemon
+Wants=network.target
+
+[Service]
+User=rsvp
+Group=rsvp
+EnvironmentFile=-/etc/rsvpd/rsvpd.conf
+ExecStart=/usr/bin/rsvpd $RSVPD_OPTS
+ExecReload=/bin/kill -HUP $MAINPID
+KillMode=process
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target
