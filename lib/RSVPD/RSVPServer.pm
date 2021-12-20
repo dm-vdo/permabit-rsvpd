@@ -205,7 +205,7 @@ sub dispatch {
   if (!$commands{$command}) {
     # unknown request.  complain and tell client
     $log->warn("UNKNOWN COMMAND: '$command'");
-    return Response::error("unknown request type: $command");
+    return RSVPD::Response::error("unknown request type: $command");
   } else {
     my $operation = $commands{$command}->[0];
     my @requiredParams = @{$commands{$command}->[1]};
@@ -217,13 +217,13 @@ sub dispatch {
       }
     }
     if (scalar(@requiredParams) != $numParams) {
-      return Response::error("Wrong params to $command, requires: "
+      return RSVPD::Response::error("Wrong params to $command, requires: "
                              . join(',', @requiredParams) . " optional: "
                              . join(',', @optionalParams));
     } else {
       foreach my $param (@requiredParams) {
         if (!defined($params->{$param})) {
-          return Response::error("$param not included in params to $command");
+          return RSVPD::Response::error("$param not included in params to $command");
         }
       }
     }
@@ -264,14 +264,14 @@ sub _addClass {
   my $type = $isResource ? "resourceClass" : "class";
 
   if (exists($self->{classes}->{$className})) {
-    return Response::error("$type $className already exists");
+    return RSVPD::Response::error("$type $className already exists");
   }
   if ($className !~ /[\w]+/) {
-    return Response::error("invalid $type name: '$className'");
+    return RSVPD::Response::error("invalid $type name: '$className'");
   }
   if ($isResource && $params->{members}
       && (scalar(@{$params->{members}} != 0))) {
-    return Response::error("$type $className can't be composite: "
+    return RSVPD::Response::error("$type $className can't be composite: "
                            . join(" ", @{$params->{members}}));
   }
 
@@ -279,9 +279,9 @@ sub _addClass {
   foreach my $member (@{$params->{members}}) {
     my $class = $self->{classes}->{$member};
     if (!defined($class)) {
-      return Response::error("member class '$member' does not exist");
+      return RSVPD::Response::error("member class '$member' does not exist");
     } elsif ($class->isResource()) {
-      return Response::error("member class '$member' can not be a resource");
+      return RSVPD::Response::error("member class '$member' can not be a resource");
     } else {
       push(@members, $class);
     }
@@ -293,7 +293,7 @@ sub _addClass {
                                                      resource    => $isResource,
                                                      members     => \@members);
   $self->saveState();
-  return Response::success("added $type $className");
+  return RSVPD::Response::success("added $type $className");
 }
 
 ######################################################################
@@ -327,10 +327,10 @@ sub addHostOrResource {
   my $type = $isResource ? "Resource" : "Host";
 
   if (exists($self->{hosts}->{$host})) {
-    $answer = Response::error("$type $host already exists");
+    $answer = RSVPD::Response::error("$type $host already exists");
   } elsif ($host !~ /[\w\.]+/) {
     # XXX What is this regexp trying to do???
-    $answer = Response::error("invalid $type: $host");
+    $answer = RSVPD::Response::error("invalid $type: $host");
   } else {
     # verify and lookup the provided classes
     if (!@{$classNames}) {
@@ -341,14 +341,14 @@ sub addHostOrResource {
     foreach my $className (@{$classNames}) {
       my $class = $self->{classes}->{$className};
       if (!$class) {
-        $answer = Response::error("class $className doesn't exist");
+        $answer = RSVPD::Response::error("class $className doesn't exist");
         last;
       } elsif ($class->isComposite()) {
-        $answer = Response::error("class $className is composite");
+        $answer = RSVPD::Response::error("class $className is composite");
         last;
       } elsif ($class->isResource() != $isResource) {
         $answer
-          = Response::error("Type of class $className and host $host differ");
+          = RSVPD::Response::error("Type of class $className and host $host differ");
         last;
       } else {
         push(@classes, $class);
@@ -357,7 +357,7 @@ sub addHostOrResource {
     if (!$answer) {
       $self->{hosts}->{$host} = RSVPD::Host->new(hostname => $host,
                                                  classes => \@classes);
-      $answer = Response::success("added $host");
+      $answer = RSVPD::Response::success("added $host");
       $self->saveState();
     }
   }
@@ -374,7 +374,7 @@ sub delClass {
   my $answer;
 
   if ($className eq $DEFAULT_CLASS) {
-    return Response::error("can't delete default class $DEFAULT_CLASS");
+    return RSVPD::Response::error("can't delete default class $DEFAULT_CLASS");
   }
 
   if (exists($self->{classes}->{$className})) {
@@ -403,10 +403,10 @@ sub delClass {
     if (@deletedResources) {
       $msg .= " and resources " . join(', ', @deletedResources);
     }
-    $answer = Response::success("$msg");
+    $answer = RSVPD::Response::success("$msg");
     $self->saveState();
   } else {
-    $answer = Response::error("class does not exist: $className");
+    $answer = RSVPD::Response::error("class does not exist: $className");
   }
 
   $log->info("delClass($className) => $answer");
@@ -423,10 +423,10 @@ sub delHost {
 
   if (exists($self->{hosts}->{$hostname})) {
     delete($self->{hosts}->{$hostname});
-    $answer = Response::success("deleted $hostname");
+    $answer = RSVPD::Response::success("deleted $hostname");
     $self->saveState();
   } else {
-    $answer = Response::error("host $hostname does not exist");
+    $answer = RSVPD::Response::error("host $hostname does not exist");
   }
 
   $log->info("delHost($hostname) => $answer");
@@ -448,7 +448,7 @@ sub listHosts {
   $log->debug("processing list_hosts");
   if ($params->{hostRegexp}
       && (!eval { "" =~ /$params->{hostRegexp}/; 1 })) {
-    return Response::error("Illegal host regexp: $params->{hostRegexp}");
+    return RSVPD::Response::error("Illegal host regexp: $params->{hostRegexp}");
   }
 
   my @hosts = (sort {$a->compareTo($b)} values %{$self->{hosts}});
@@ -458,7 +458,7 @@ sub listHosts {
     # List all hosts belonging to this class
     my $class = $self->_parseClassExpr($classExpr);
     if (! defined($class)) {
-      return Response::error("No such class $classExpr");
+      return RSVPD::Response::error("No such class $classExpr");
     }
     @hosts = grep {$class->containsHost($_)} @hosts;
   }
@@ -475,7 +475,7 @@ sub listHosts {
 
   my $listClasses = $params->{verbose};
   my @hostList = map {$_->toArray($listClasses, $params->{next})} @hosts;
-  return Response::success("success", \@hostList);
+  return RSVPD::Response::success("success", \@hostList);
 }
 
 ######################################################################
@@ -485,7 +485,7 @@ sub listClasses {
   my ($self, $params) = assertNumArgs(2, @_);
   my @classes = (sort {$a->compareTo($b)} values %{$self->{classes}});
   my @classList = map {$_->toArray()} @classes;
-  return Response::success("success", \@classList);
+  return RSVPD::Response::success("success", \@classList);
 }
 
 ######################################################################
@@ -495,7 +495,7 @@ sub modifyHost {
   my ($self, $params) = assertNumArgs(2, @_);
   my $hostname = canonicalizeHostname($params->{host});
   if (!exists($self->{hosts}->{$hostname})) {
-    return Response::error("host $hostname not found");
+    return RSVPD::Response::error("host $hostname not found");
   }
 
   my (@addClasses, @delClasses);
@@ -504,9 +504,9 @@ sub modifyHost {
   foreach my $className (@{$params->{addClasses}}) {
     my $class = $self->{classes}->{$className};
     if (!$class) {
-      return Response::error("class $className doesn't exist");
+      return RSVPD::Response::error("class $className doesn't exist");
     } elsif ($class->isComposite()) {
-      return Response::error("class $className is composite");
+      return RSVPD::Response::error("class $className is composite");
     } else {
       if ($class->isResource()) {
         $numResources++;
@@ -519,7 +519,7 @@ sub modifyHost {
   foreach my $className (@{$params->{delClasses}}) {
     my $class = $self->{classes}->{$className};
     if (!$class) {
-      return Response::error("class $className doesn't exist");
+      return RSVPD::Response::error("class $className doesn't exist");
     } else {
       push(@delClasses, $class);
     }
@@ -532,7 +532,7 @@ sub modifyHost {
     }
     if ($class->isResource() != $numResources) {
       return
-        Response::error("Can't have both resources and non-resources in list");
+        RSVPD::Response::error("Can't have both resources and non-resources in list");
     }
     if ($class->isResource()) {
       $numResources++;
@@ -540,11 +540,11 @@ sub modifyHost {
   }
 
   if ($numResources > 1) {
-    return Response::error("Resources may only belong to 1 resource class");
+    return RSVPD::Response::error("Resources may only belong to 1 resource class");
   }
   if (($numResources > 0) && ($numNormals > 0)) {
     return
-      Response::error("Host can't be in both resource and normal classes");
+      RSVPD::Response::error("Host can't be in both resource and normal classes");
   }
 
   foreach my $class (@addClasses) {
@@ -556,7 +556,7 @@ sub modifyHost {
   $self->saveState();
   my $classes = "added=" . join(',', @{$params->{addClasses}})
     . ", removed=" . join(',', @{$params->{delClasses}});
-  my $answer = Response::success("modified host $hostname, $classes");
+  my $answer = RSVPD::Response::success("modified host $hostname, $classes");
   $log->info("modifyClass($hostname, $params->{user}, $classes) => $answer");
   return $answer;
 }
@@ -571,13 +571,13 @@ sub reserveHostByName {
   if ($answer->isSuccess()) {
     my $host = $self->{hosts}->{$hostname};
     if ($host->isReserved()) {
-      $answer = Response::error("host $hostname already reserved by "
+      $answer = RSVPD::Response::error("host $hostname already reserved by "
                                 . $host->getUser(), 1);
     } elsif ($host->isResource() && !$params->{resource}) {
-      $answer = Response::error("host $hostname is a resource and must "
+      $answer = RSVPD::Response::error("host $hostname is a resource and must "
                                 . "be reserved using 'reserve_resources'");
     } elsif (!$host->isResource() && $params->{resource}) {
-      $answer = Response::error("host $hostname is not a resource and must "
+      $answer = RSVPD::Response::error("host $hostname is not a resource and must "
                                 . "be reserved using 'reserve'");
     } else {
       # all systems go
@@ -586,7 +586,7 @@ sub reserveHostByName {
       $host->setExpiryTime($params->{expire});
       $host->setMessage($params->{msg});
       $host->setKey($params->{key});
-      $answer = Response::success("reserved $hostname");
+      $answer = RSVPD::Response::success("reserved $hostname");
       $self->saveState();
     }
   }
@@ -604,12 +604,12 @@ sub reserveHostsByClass {
   my $className = $params->{class} || $DEFAULT_RESERVE_CLASS;
 
   if ($params->{user} eq "root") {
-    return Response::error("user root may not reserve hosts");
+    return RSVPD::Response::error("user root may not reserve hosts");
   }
 
   my $class = $self->_parseClassExpr($className);
   if (! defined($class)) {
-    return Response::error("class does not exist: '$className'");
+    return RSVPD::Response::error("class does not exist: '$className'");
   }
 
   # attempt to find n unreserved hosts belonging to the class
@@ -678,19 +678,19 @@ sub _reserveHosts {
   my $answer;
 
   if ($params->{numhosts} !~ /^\d+$/) {
-    return Response::error("numhosts must be numeric: $params->{numhosts}");
+    return RSVPD::Response::error("numhosts must be numeric: $params->{numhosts}");
   }
 
   if ($params->{numhosts} <= 0) {
-    $answer = Response::error("invalid numhosts: $params->{numhosts}");
+    $answer = RSVPD::Response::error("invalid numhosts: $params->{numhosts}");
   } elsif (scalar(@{$hosts}) < $params->{numhosts}) {
     # didn't find enough open hosts
     $answer
-      = Response::error("not enough free hosts to get $params->{numhosts}, "
+      = RSVPD::Response::error("not enough free hosts to get $params->{numhosts}, "
                         . "have " . scalar(@{$hosts}) . " free", 1);
   } elsif (!$params->{user}) {
     # User undefined or ""
-    $answer = Response::error("Invalid user '$params->{user}'");
+    $answer = RSVPD::Response::error("Invalid user '$params->{user}'");
   } else {
     # found enough open hosts
     my @hostnames;
@@ -705,7 +705,7 @@ sub _reserveHosts {
       # backwards too
       unshift(@hostnames, $host->getName());
     }
-    $answer = Response::success("reserved " . join(" ",@hostnames),
+    $answer = RSVPD::Response::success("reserved " . join(" ",@hostnames),
                                 \@hostnames);
     $self->saveState();
   }
@@ -763,19 +763,19 @@ sub _releaseReservation {
   my $host = $self->{hosts}->{$object};
   my $answer;
   if (!defined($host)) {
-    return Response::error("$type '" . ($object || '') . "' does not exist");
+    return RSVPD::Response::error("$type '" . ($object || '') . "' does not exist");
   } elsif ($isResource != $host->isResource()) {
-    return Response::error("$object is not a type of $type");
+    return RSVPD::Response::error("$object is not a type of $type");
   } elsif (!$host->reservedBy($user)) {
-    return Response::error("$type $object not reserved by $user");
+    return RSVPD::Response::error("$type $object not reserved by $user");
   } elsif (!$forceRelease && ($host->getKey() ne $key)) {
     my $expectedKey = $host->getKey() || '';
-    return Response::error("Wrong key provided to release $type $object: "
+    return RSVPD::Response::error("Wrong key provided to release $type $object: "
                            . "expected '$expectedKey'");
   } else {
     if ($host->isNextUserSet()) {
       $host->reserveForNextUser();
-      $answer = Response::success("released $object and reserved it for "
+      $answer = RSVPD::Response::success("released $object and reserved it for "
                                   . $host->getUser());
       my $expiry = $host->getExpiryTime();
       $expiry = $expiry ? localtime($expiry) : 'forever';
@@ -802,7 +802,7 @@ EOF
       }
     } else {
       $host->clear();
-      $answer = Response::success("released $object");
+      $answer = RSVPD::Response::success("released $object");
     }
     $self->saveState();
   }
@@ -820,11 +820,11 @@ sub verifyReservation {
 
   # verify a single reserved host
   if (!defined($host)) {
-    $answer = Response::error("host $hostname does not exist");
+    $answer = RSVPD::Response::error("host $hostname does not exist");
   } elsif (!$host->reservedBy($params->{user})) {
-    $answer = Response::error("host $hostname not owned by $params->{user}");
+    $answer = RSVPD::Response::error("host $hostname not owned by $params->{user}");
   } else {
-    $answer = Response::success("verified $hostname");
+    $answer = RSVPD::Response::success("verified $hostname");
   }
 
   $log->info("verifyReservation($hostname, $params->{user} => $answer");
@@ -844,18 +844,18 @@ sub renewReservation {
   # renew a single reserved host
   if (!defined($host)) {
     # host not found
-    $answer = Response::error("host $hostname does not exist");
+    $answer = RSVPD::Response::error("host $hostname does not exist");
   } elsif (!$host->reservedBy($params->{user})) {
     # someone else has it
     $answer
-      = Response::error("host $hostname not reserved by $params->{user}");
+      = RSVPD::Response::error("host $hostname not reserved by $params->{user}");
   } else {
     # all systems go
     $host->setExpiryTime($params->{expire});
     if ($params->{msg}) {
       $host->setMessage($params->{msg});
     }
-    $answer = Response::success("renewed $hostname");
+    $answer = RSVPD::Response::success("renewed $hostname");
     $self->saveState();
   }
 
@@ -875,20 +875,20 @@ sub addNextUser {
   if ($answer->isSuccess()) {
     my $host = $self->{hosts}->{$hostname};
     if (!$host->isReserved()) {
-      $answer = Response::error("host $hostname is not reserved");
+      $answer = RSVPD::Response::error("host $hostname is not reserved");
     } elsif ($host->getUser() eq  $params->{user}) {
-      $answer = Response::error("host $hostname already reserved by "
+      $answer = RSVPD::Response::error("host $hostname already reserved by "
                                 . $host->getUser());
     } elsif ($host->isNextUserSet()
              && ($host->getNextUser() ne $params->{user})) {
-      $answer = Response::error("host $hostname already has next user "
+      $answer = RSVPD::Response::error("host $hostname already has next user "
                                 . $host->getNextUser());
     } else {
       # all systems go
       $host->setNextUser($params->{user});
       $host->setNextExpiryTime($params->{expire});
       $host->setNextMessage($params->{msg});
-      $answer = Response::success("next user of $hostname is '$params->{user}'");
+      $answer = RSVPD::Response::success("next user of $hostname is '$params->{user}'");
       $self->saveState();
     }
   }
@@ -904,10 +904,10 @@ sub getCurrentUser {
   my ($self, $params) = assertNumArgs(2, @_);
   my $hostname = canonicalizeHostname($params->{host});
   if (! defined($self->{hosts}->{$hostname})) {
-    return Response::error("$hostname is not in rsvp");
+    return RSVPD::Response::error("$hostname is not in rsvp");
   }
   my $host = $self->{hosts}->{$hostname};
-  return Response::success("success", $host->getUser());
+  return RSVPD::Response::success("success", $host->getUser());
 }
 
 ######################################################################
@@ -922,10 +922,10 @@ sub delNextUser {
     my $host = $self->{hosts}->{$hostname};
     if ($params->{user} eq $host->getNextUser()) {
       $host->clearNextUser();
-      $answer = Response::success("cleared next user of $hostname");
+      $answer = RSVPD::Response::success("cleared next user of $hostname");
       $self->saveState();
     } else {
-      $answer = Response::error("'$params->{user}' cannot delete next user "
+      $answer = RSVPD::Response::error("'$params->{user}' cannot delete next user "
                                 . $host->getNextUser());
     }
   }
@@ -942,17 +942,17 @@ sub checkReservationParams {
   my $answer;
   if (!exists($self->{hosts}->{$hostname})) {
     # host isn't here
-    $answer = Response::error("host $hostname not found");
+    $answer = RSVPD::Response::error("host $hostname not found");
   } elsif (!$user) {
     # User undefined or ""
-    $answer = Response::error("Invalid user $user");
+    $answer = RSVPD::Response::error("Invalid user $user");
   } elsif ($user eq "root") {
-    $answer = Response::error("user root may not reserve hosts");
+    $answer = RSVPD::Response::error("user root may not reserve hosts");
   } elsif ($expire && ($expire !~ /^\d+$/)) {
     # Invalid expiry
-    $answer = Response::error("Invalid expiry time $expire");
+    $answer = RSVPD::Response::error("Invalid expiry time $expire");
   } else {
-    $answer = Response::success("");
+    $answer = RSVPD::Response::success("");
   }
   return $answer;
 }
@@ -973,7 +973,7 @@ sub reviveHost {
         push(@revivedHosts, $host->getName());
       }
     }
-    $answer = Response::success("revived " . join(',', @revivedHosts));
+    $answer = RSVPD::Response::success("revived " . join(',', @revivedHosts));
   } else {
     my $hostname = canonicalizeHostname($params->{host});
     # revive a single host
@@ -981,12 +981,12 @@ sub reviveHost {
       my $host = $self->{hosts}->{$hostname};
       if ($host->revive()) {
         push(@revivedHosts, $hostname);
-        $answer = Response::success("revived $hostname");
+        $answer = RSVPD::Response::success("revived $hostname");
       } else {
-        $answer = Response::error("host $hostname did not need to be revived");
+        $answer = RSVPD::Response::error("host $hostname did not need to be revived");
       }
     } else {
-      $answer = Response::error("host $hostname does not exist");
+      $answer = RSVPD::Response::error("host $hostname does not exist");
     }
   }
   $self->saveState();
