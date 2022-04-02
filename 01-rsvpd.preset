@@ -1,1 +1,1 @@
-enable permabit-rsvpd.service
+enable rsvpd.service
