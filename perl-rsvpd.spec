@@ -3,7 +3,7 @@
 
 Name:           perl-rsvpd
 Version:        0.2
-Release:        2%{?dist}
+Release:        3%{?dist}
 Summary:        Permabit machine reservation system
 License:        GPL+ or Artistic
 URL:            https://gitlab.cee.redhat.com/vdo/open-sourcing/tools/permabit-rsvpd
@@ -86,7 +86,6 @@ find %{buildroot} -type f -name .packlist -delete
 %{__install} -m 0755 -d $RPM_BUILD_ROOT/var/log/rsvpd
 %{__install} -m 0755 -d $RPM_BUILD_ROOT/var/lib/rsvpd
 
-
 %check
 make test
 
@@ -119,6 +118,9 @@ reservation system.
 %{_bindir}/rsvpclient
 
 %changelog
+* Sat Apr 02 2022 Andy Walsh <awalsh@redhat.com> - 0.2-3
+- Fixed preset name to enable the right service
+
 * Thu Mar 17 2022 Andy Walsh <awalsh@redhat.com> - 0.2-2
 - Updated sources
 
