@@ -3,7 +3,7 @@
 
 Name:           perl-rsvpd
 Version:        0.2
-Release:        3%{?dist}
+Release:        4%{?dist}
 Summary:        Permabit machine reservation system
 License:        GPL+ or Artistic
 URL:            https://gitlab.cee.redhat.com/vdo/open-sourcing/tools/permabit-rsvpd
@@ -68,6 +68,15 @@ getent passwd rsvp >/dev/null || \
   useradd -r -g rsvp -s /sbin/nologin -c "RSVPD Daemon user account" rsvp
 exit 0
 
+%post
+%systemd_post rsvpd.service
+
+%preun
+%systemd_preun rsvpd.service
+
+%postun
+%systemd_postun_with_restart rsvpd.service
+
 %install
 make pure_install DESTDIR=%{buildroot}
 find %{buildroot} -type f -name .packlist -delete
@@ -118,6 +127,9 @@ reservation system.
 %{_bindir}/rsvpclient
 
 %changelog
+* Sat Apr 16 2022 Andy Walsh <awalsh@redhat.com> - 0.2-4
+- Actually made preset take effect
+
 * Sat Apr 02 2022 Andy Walsh <awalsh@redhat.com> - 0.2-3
 - Fixed preset name to enable the right service
 
