@@ -3,9 +3,9 @@
 
 Name:           perl-rsvpd
 Version:        0.2
-Release:        4%{?dist}
+Release:        5%{?dist}
 Summary:        Permabit machine reservation system
-License:        GPL+ or Artistic
+License:        GPLv2
 URL:            https://gitlab.cee.redhat.com/vdo/open-sourcing/tools/permabit-rsvpd
 Source0:        %{url}/-/archive/main/permabit-rsvpd-main.tar.gz
 # Module Build
@@ -127,6 +127,9 @@ reservation system.
 %{_bindir}/rsvpclient
 
 %changelog
+* Wed Jul 27 2022 Andy Walsh <awalsh@redhat.com> - 0.2-5
+- Updated license to GPLv2
+
 * Sat Apr 16 2022 Andy Walsh <awalsh@redhat.com> - 0.2-4
 - Actually made preset take effect
 

@@ -348,7 +348,7 @@
 #
 # @author
 #
-# Permabit Tools Team <dev-tools@at@permabit.com>, with code from
+# VDO Team <vdo-devel@at@redhat.com>, with code from
 # Schedule::Load, by Wilson Snyder <wsnyder@at@wsnyder.org>
 #
 # $Id: //eng/main/src/perl/bin/rsvpclient.pl#46 $
