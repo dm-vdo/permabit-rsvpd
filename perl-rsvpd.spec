@@ -6,8 +6,8 @@ Version:        0.2
 Release:        5%{?dist}
 Summary:        Permabit machine reservation system
 License:        GPLv2
-URL:            https://gitlab.cee.redhat.com/vdo/open-sourcing/tools/permabit-rsvpd
-Source0:        %{url}/-/archive/main/permabit-rsvpd-main.tar.gz
+URL:            https://github.com/dm-vdo/permabit-rsvpd
+Source0:        %{url}/archive/refs/heads/main.tar.gz
 # Module Build
 BuildRequires:  coreutils
 BuildRequires:  findutils
