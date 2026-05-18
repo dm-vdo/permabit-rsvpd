@@ -3,7 +3,7 @@
 
 Name:           perl-rsvpd
 Version:        0.2
-Release:        5%{?dist}
+Release:        6%{?dist}
 Summary:        Permabit machine reservation system
 License:        GPLv2
 URL:            https://github.com/dm-vdo/permabit-rsvpd
@@ -51,6 +51,9 @@ BuildRequires:  systemd
 Requires:       perl(:MODULE_COMPAT_%(eval "`perl -V:version`"; echo $version))
 Requires(pre):  shadow-utils
 %{?systemd_requires}
+
+Provides: user(rsvp)
+Provides: group(rsvp)
 
 %description
 RSVP Server Side to the Permabit machine reservation system.
@@ -127,6 +130,9 @@ reservation system.
 %{_bindir}/rsvpclient
 
 %changelog
+* Mon May 18 2026 Chung Chung <cchung@redhat.com> - 0.2-6
+- Add Provides for user(rsvp) and group(rsvp) to fix 43 metadata.
+
 * Wed Jul 27 2022 Andy Walsh <awalsh@redhat.com> - 0.2-5
 - Updated license to GPLv2
 
